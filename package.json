@@ -1,0 +1,88 @@
+{
+  "name": "focus-next-on-stage",
+  "displayName": "Focus Next on Stage",
+  "description": "Keeps a file focused and open in the Source Control view after you stage or unstage one.",
+  "version": "0.4.0",
+  "publisher": "finnmerlett",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "test:unit": "npm run compile && node --test \"out/test/unit/**/*.test.js\"",
+    "test:e2e": "npm run compile && node test/e2e/run.mjs",
+    "package": "npx --yes @vscode/vsce@4.1.0 package --no-dependencies --allow-missing-repository",
+    "vscode:prepublish": "npm run compile",
+    "test:e2e:multi": "npm run compile && node test/e2e/multi.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/vscode": "1.93.0",
+    "typescript": "5.9.3"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "focusNextOnStage.stage",
+        "title": "Stage and Focus Next",
+        "category": "Focus Next on Stage"
+      },
+      {
+        "command": "focusNextOnStage.unstage",
+        "title": "Unstage and Focus Next",
+        "category": "Focus Next on Stage"
+      }
+    ],
+    "configuration": {
+      "title": "Focus Next on Stage",
+      "properties": {
+        "focusNextOnStage.whenAllStaged": {
+          "type": "string",
+          "enum": [
+            "commitInput",
+            "lowestStaged",
+            "none"
+          ],
+          "enumDescriptions": [
+            "Focus the commit message box. With several repositories open, focus the last file in Staged Changes instead, because the commit box command may pick another repository.",
+            "Focus the last file in Staged Changes.",
+            "Leave focus alone."
+          ],
+          "default": "commitInput",
+          "description": "Where focus goes after staging when no unstaged files are left."
+        },
+        "focusNextOnStage.whenAllUnstaged": {
+          "type": "string",
+          "enum": [
+            "topUnstaged",
+            "none"
+          ],
+          "enumDescriptions": [
+            "Focus the file at the top of the unstaged groups (Merge Changes, Changes, Untracked Changes).",
+            "Leave focus alone."
+          ],
+          "default": "topUnstaged",
+          "description": "Where focus goes after unstaging when no staged files are left."
+        },
+        "focusNextOnStage.stayInFolder": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "In tree view, keep focus inside the folder of the file you staged or unstaged while it has files left. Staging the last file in a folder then focuses the folder's new last file instead of the first file of the next folder. When the folder is empty, focus moves to the closest enclosing folder that has files left."
+        }
+      }
+    }
+  }
+}

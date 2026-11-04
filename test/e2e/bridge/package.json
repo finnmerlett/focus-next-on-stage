@@ -1,0 +1,11 @@
+{
+  "name": "fln-test-bridge",
+  "displayName": "Focus Next on Stage: e2e test bridge",
+  "description": "Test only. Runs extension-host code sent from the e2e runner over a local HTTP port.",
+  "version": "0.0.1",
+  "publisher": "finnmerlett",
+  "private": true,
+  "engines": { "vscode": "^1.93.0" },
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js"
+}
