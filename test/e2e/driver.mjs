@@ -118,9 +118,9 @@ export function createDriver(vs) {
 		const logs = join(vs.root, 'ud', 'logs');
 		const file = readdirSync(logs, { recursive: true })
 			.map(String)
-			.find(f => f.includes('finnmerlett.focus-next-on-stage') && f.endsWith('.log'));
+			.find(f => f.includes('finnbuilds.focus-next-on-stage') && f.endsWith('.log'));
 		// Without the log the retry check would pass whatever happened, for example after a rename.
-		if (!file) throw new Error(`No log for finnmerlett.focus-next-on-stage under ${logs}`);
+		if (!file) throw new Error(`No log for finnbuilds.focus-next-on-stage under ${logs}`);
 		return readFileSync(join(logs, file), 'utf8');
 	}
 

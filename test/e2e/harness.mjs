@@ -139,7 +139,7 @@ export async function launch({ repo, repos, folder, settings = {}, keybindings =
     ...(hidden ? [`--inspect-brk=${mainInspectPort}`] : []),
     '--new-window', '--skip-welcome', '--skip-release-notes', '--disable-workspace-trust',
     // Debug logging for this extension, written under <user data>/logs.
-    '--log=finnmerlett.focus-next-on-stage:debug',
+    '--log=finnbuilds.focus-next-on-stage:debug',
     ...devPaths, openDir,
   ], { stdio: 'ignore', detached: true, env: { ...process.env, FLN_BRIDGE_PORT: String(bridgePort), FLN_TEST_IGNORE_WINDOW_FOCUS: '1' } });
   child.unref();

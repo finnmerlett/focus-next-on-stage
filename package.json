@@ -2,9 +2,18 @@
   "name": "focus-next-on-stage",
   "displayName": "Focus Next on Stage",
   "description": "Keeps a file focused and open in the Source Control view after you stage or unstage one.",
-  "version": "0.4.0",
-  "publisher": "finnmerlett",
+  "version": "0.4.1",
+  "publisher": "finnbuilds",
+  "icon": "images/icon.png",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/finnmerlett/focus-next-on-stage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/finnmerlett/focus-next-on-stage/issues"
+  },
+  "homepage": "https://github.com/finnmerlett/focus-next-on-stage#readme",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -12,13 +21,22 @@
     "SCM Providers",
     "Other"
   ],
+  "keywords": [
+    "git",
+    "source control",
+    "scm",
+    "stage",
+    "unstage",
+    "focus",
+    "keyboard"
+  ],
   "main": "./out/extension.js",
   "scripts": {
     "compile": "tsc -p .",
     "watch": "tsc -watch -p .",
     "test:unit": "npm run compile && node --test \"out/test/unit/**/*.test.js\"",
     "test:e2e": "npm run compile && node test/e2e/run.mjs",
-    "package": "npx --yes @vscode/vsce@4.1.0 package --no-dependencies --allow-missing-repository",
+    "package": "npx --yes @vscode/vsce@4.1.0 package --no-dependencies",
     "vscode:prepublish": "npm run compile",
     "test:e2e:multi": "npm run compile && node test/e2e/multi.mjs"
   },

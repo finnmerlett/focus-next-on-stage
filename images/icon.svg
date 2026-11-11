@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4A6C96"/>
+      <stop offset="1" stop-color="#2C3E5C"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bg)"/>
+
+  <!-- Untracked row: U in a green circle -->
+  <rect x="18" y="19" width="58" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.45"/>
+  <circle cx="97" cy="28" r="13" fill="#3DDC97"/>
+  <path d="M91.9 21.4v7.3a5.1 5.1 0 0 0 10.2 0v-7.3" fill="none" stroke="#0E3B2A" stroke-width="3.7" stroke-linecap="round"/>
+
+  <!-- Focused row: M in an orange circle -->
+  <rect x="10" y="46" width="108" height="36" rx="14" fill="#FFFFFF" fill-opacity="0.16" stroke="#FFFFFF" stroke-width="4"/>
+  <rect x="18" y="55" width="50" height="18" rx="9" fill="#FFFFFF"/>
+  <circle cx="97" cy="64" r="13" fill="#FFB547"/>
+  <path d="M90.7 70.3v-12.6l6.3 7.8 6.3-7.8v12.6" fill="none" stroke="#4A2A00" stroke-width="3.7" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Row below, with an arrow from the focused row down to it -->
+  <rect x="18" y="91" width="42" height="18" rx="9" fill="#FFFFFF" fill-opacity="0.45"/>
+  <path d="M97 89v21M90 103l7 7 7-7" fill="none" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
