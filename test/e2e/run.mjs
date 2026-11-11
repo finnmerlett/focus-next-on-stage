@@ -26,6 +26,13 @@ const viewKeys = (key, command) => [
 		({ key, command, args: { viewMode: 'list', viewSortKey }, when: `${SCM} && scmViewMode == 'list' && scmViewSortKey == '${viewSortKey}'` })),
 ];
 
+// The README's bindings for staging the file in the editor. The command returns once the next
+// file is open, and focusActiveEditorGroup then gives that editor keyboard focus.
+const editorKey = (key, command) => ({
+	key, command: 'runCommands', args: { commands: [command, 'workbench.action.focusActiveEditorGroup'] },
+	when: 'editorFocus && gitOpenRepositoryCount != 0',
+});
+
 const vs = await launch({
 	repo: { files: FILES },
 	settings: { 'scm.defaultViewMode': 'tree', 'window.dialogStyle': 'custom' },
@@ -33,6 +40,9 @@ const vs = await launch({
 		...viewKeys('s', 'focusNextOnStage.stage'), ...viewKeys('shift+s', 'focusNextOnStage.unstage'),
 		// A binding that passes only a sort order, as 0.3.0's README suggested.
 		{ key: 'n', command: 'focusNextOnStage.stage', args: { viewSortKey: 'name' }, when: `${SCM} && scmViewMode == 'list'` },
+		editorKey('ctrl+alt+s', 'focusNextOnStage.stage'), editorKey('ctrl+alt+shift+s', 'focusNextOnStage.unstage'),
+		// The README's variant that moves keyboard focus into Source Control instead.
+		{ key: 'ctrl+alt+d', command: 'runCommands', args: { commands: ['focusNextOnStage.stage', 'workbench.view.scm'] }, when: 'editorFocus && gitOpenRepositoryCount != 0' },
 	],
 	extensions: [PROJECT],
 	port: 9340, bridgePort: 9440,
@@ -114,6 +124,43 @@ await scenario('s stages the open file, then focuses and opens the file below it
 	await expectFocus({ row: 'c.ts, Modified, src', tab: 'c.ts (Working Tree)' });
 	console.log(`     focus and editor moved within ${Date.now() - pressed}ms of pressing s`);
 	if (!(await staged()).includes('src/deep/d.ts')) throw new Error('d.ts was not staged');
+});
+
+await scenario('an editor key stages the file in the editor and focuses the next one', async () => {
+	await arrange({ modified: ALL });
+	await clickRow('d.ts, Modified, src/deep');
+	await command('workbench.action.focusActiveEditorGroup');
+	await cdp.key('s', 1 | 2);
+	await expectFocus({ row: 'c.ts, Modified, src', tab: 'c.ts (Working Tree)', dom: 'editor' });
+	if (!(await staged()).includes('src/deep/d.ts')) throw new Error('d.ts was not staged');
+});
+
+await scenario('an editor key stages a file opened from the Explorer', async () => {
+	await arrange({ modified: ['a.txt', 'b.txt'] });
+	await bridge(`await vscode.window.showTextDocument(vscode.Uri.file(${JSON.stringify(vs.repoDir + '/a.txt')})); return true`);
+	await cdp.key('s', 1 | 2);
+	await expectFocus({ row: 'b.txt, Modified', tab: 'b.txt (Working Tree)', dom: 'editor' });
+	if (!(await staged()).includes('a.txt')) throw new Error('a.txt was not staged');
+});
+
+await scenario('an editor key can move focus to the next row in Source Control', async () => {
+	await arrange({ modified: ALL });
+	await clickRow('d.ts, Modified, src/deep');
+	await command('workbench.action.focusActiveEditorGroup');
+	await cdp.key('d', 1 | 2);
+	await expectFocus({ row: 'c.ts, Modified, src', tab: 'c.ts (Working Tree)' });
+	// The Source Control keys then work straight away.
+	await cdp.key('s');
+	await expectFocus({ row: 'x.ts, Modified, z/y', tab: 'x.ts (Working Tree)' });
+});
+
+await scenario('an editor key unstages the file in the editor', async () => {
+	await arrange({ staged: ['a.txt', 'b.txt'] });
+	await clickRow('a.txt, Index Modified');
+	await command('workbench.action.focusActiveEditorGroup');
+	await cdp.key('s', 1 | 2 | 8);
+	await expectFocus({ row: 'b.txt, Index Modified', tab: 'b.txt (Index)', dom: 'editor' });
+	if ((await staged()).includes('a.txt')) throw new Error('a.txt is still staged');
 });
 
 await scenario('the file below can be in the next folder', async () => {

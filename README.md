@@ -15,9 +15,11 @@ code --install-extension finnbuilds.focus-next-on-stage
 
 Then stage or unstage a file with the `+` and `−` buttons, the context menu or `Git: Stage Changes`, and focus moves to the next file.
 
+The extension needs VS Code's `scm.autoReveal` setting, which is on by default. If you've turned it off, turn it back on.
+
 ## Advanced use
 
-### Keyboard staging
+### Keyboard staging in Source Control
 
 To stage and unstage the highlighted row from the keyboard, add these to `keybindings.json`. The example uses `s` and `shift+s`, but any keys work:
 
@@ -32,7 +34,30 @@ To stage and unstage the highlighted row from the keyboard, add these to `keybin
   "when": "focusedView == 'workbench.scm' && listFocus && !inputFocus && treeElementHasParent && !treeElementHasChild && scmViewMode == 'list'" }
 ```
 
+The `when` clause makes the keys work only on file rows in Source Control:
+
+- `focusedView == 'workbench.scm' && listFocus && !inputFocus` means the Source Control list has keyboard focus and you aren't typing in the commit message box.
+- `treeElementHasParent && !treeElementHasChild` means the highlighted row is a file, not a folder or a group heading such as Changes. The keys open the row before staging it, and opening a folder row would collapse it.
+- `scmViewMode == 'tree'` or `'list'` picks the entry that matches the view.
+
 The `args` tell the extension whether the view is a tree or a list, which extensions can't read. If you use list view sorted by name or status, see [Sort orders](#sort-orders).
+
+### Keyboard staging from the editor
+
+To stage or unstage the file you're editing without going to Source Control, add these as well. The next file then opens in the editor, ready to review:
+
+```jsonc
+{ "key": "ctrl+alt+s", "command": "runCommands",
+  "args": { "commands": ["focusNextOnStage.stage", "workbench.action.focusActiveEditorGroup"] },
+  "when": "editorFocus && gitOpenRepositoryCount != 0" },
+{ "key": "ctrl+alt+shift+s", "command": "runCommands",
+  "args": { "commands": ["focusNextOnStage.unstage", "workbench.action.focusActiveEditorGroup"] },
+  "when": "editorFocus && gitOpenRepositoryCount != 0" }
+```
+
+Pick any keys that are free in your setup. In the `when` clause, `editorFocus` means an editor has keyboard focus, and `gitOpenRepositoryCount != 0` means a git repository is open. These bindings don't pass the view layout, so the extension uses the one from your last Source Control key press, or your `scm.defaultViewMode` setting (see [Sort orders](#sort-orders)).
+
+`runCommands` is built into VS Code and runs the commands in order. The next file opens without keyboard focus, so the second command decides where focus goes. `workbench.action.focusActiveEditorGroup` puts it in the editor, so you can carry on typing or press the key again. To move focus to the next file's row in Source Control instead, use `workbench.view.scm`, and the Source Control keys above then work straight away.
 
 ### Settings
 
@@ -48,7 +73,7 @@ VS Code has no API for focusing a row in the Source Control view. The extension 
 
 To notice stages and unstages from the buttons, the extension listens to the git extension's internal API. If a VS Code update changes that API, the extension logs a warning to the "Focus Next on Stage" output channel and focus stops moving, but the two commands still stage and unstage.
 
-The keyboard commands act on the highlighted row. `git.stage` and `git.unstage` only act on the active editor, so the extension opens the highlighted row first, as Space does. The `when` clauses keep the keys off folder rows, because opening a folder row collapses it.
+`git.stage` and `git.unstage` only act on the file in the active editor. When a keybinding passes the view layout in `args`, the extension opens the highlighted row first, as Space does, so the key acts on that row. Without `args`, as in the editor bindings, the commands act on the file in the active editor.
 
 ### Sort orders
 
@@ -59,7 +84,6 @@ For list view sorted by name or status, add entries after the ones above with `"
 <details>
 <summary>Known limits</summary>
 
-- `scm.autoReveal` must be on.
 - Staging from a terminal (`git add`), and staging selected lines or a single change, doesn't move focus.
 - The extension can't tell a stage in the Source Control view from one made by `Git: Stage Changes`, the editor title bar button or another extension, so all of them move focus. Stages made while the multi-file diff editor is active don't move focus.
 - A file with both staged and unstaged changes can only be focused on the unstaged side, so after an unstage it's skipped.
