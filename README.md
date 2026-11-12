@@ -92,7 +92,8 @@ For list view sorted by name or status, add entries after the ones above with `"
 - If the next file has unsaved changes, an extra tab for it can be left open.
 - With `workbench.editor.limit.enabled` on and the limit reached, focusing a staged diff or deleted file can close the least recently used editor.
 - In list view sorted by status with a display language other than English, the next file can be the wrong one.
-- The keys can't stage rows that open in an image or custom editor, or conflicts that don't open an editor (Added By Us, Added By Them, Both Deleted). On those rows, and on slow merge conflict rows with `git.mergeEditor` on, a key press can stage the file in the active editor instead.
+- The keys can't stage conflicts that don't open an editor (Added By Us, Added By Them, Both Deleted). On those rows, and on slow merge conflict rows with `git.mergeEditor` on, a key press can stage the file in the active editor instead.
+- Image diffs and custom editor diffs, such as the rendered Markdown diff, don't tell extensions which file they show, so the extension goes by the tab title. If two changed files have the same name and you open one of these diffs by clicking its row, the keys can't tell which file it is until focus has moved to it.
 
 </details>
 

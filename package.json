@@ -2,7 +2,7 @@
   "name": "focus-next-on-stage",
   "displayName": "Focus Next on Stage",
   "description": "Keeps a file focused and open in the Source Control view after you stage or unstage one.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "publisher": "finnbuilds",
   "icon": "images/icon.png",
   "license": "MIT",

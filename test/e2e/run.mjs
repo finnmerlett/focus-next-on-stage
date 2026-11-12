@@ -15,6 +15,9 @@ const pad = n => String(n).padStart(2, '0');
 const MANY_STAGED = Array.from({ length: 25 }, (_, i) => `many/f${pad(i + 1)}.txt`);
 const MANY_UNSTAGED = Array.from({ length: 25 }, (_, i) => `big/g${pad(i + 1)}.txt`);
 for (const f of [...MANY_STAGED, ...MANY_UNSTAGED]) FILES[f] = `${f}\n`;
+// Two files with the same name, for the rendered Markdown diff scenarios only.
+FILES['docs/n.md'] = 'n\n';
+FILES['lib/n.md'] = 'lib n\n';
 
 // The keybindings from the README, plus its entries for list view sorted by name or status.
 const SCM = "focusedView == 'workbench.scm' && listFocus && !inputFocus && treeElementHasParent && !treeElementHasChild";
@@ -124,6 +127,52 @@ await scenario('s stages the open file, then focuses and opens the file below it
 	await expectFocus({ row: 'c.ts, Modified, src', tab: 'c.ts (Working Tree)' });
 	console.log(`     focus and editor moved within ${Date.now() - pressed}ms of pressing s`);
 	if (!(await staged()).includes('src/deep/d.ts')) throw new Error('d.ts was not staged');
+});
+
+// The rendered Markdown diff is a custom editor, which has no tab input in the API.
+const RENDERED_MD = { '*.md': 'vscode.markdown.preview.editor' };
+
+await scenario('s stages a Markdown file shown as a rendered diff', async () => {
+	await withSetting('workbench.editorAssociations', RENDERED_MD, async () => {
+		await arrange({ modified: ALL });
+		await clickRow('e.md, Modified, docs');
+		await cdp.key('s');
+		await expectFocus({ row: 'w.ts, Modified, lib', tab: 'w.ts (Working Tree)' });
+		if (!(await staged()).includes('docs/e.md')) throw new Error('e.md was not staged');
+	});
+});
+
+await scenario('shift+s unstages a Markdown file shown as a rendered diff', async () => {
+	await withSetting('workbench.editorAssociations', RENDERED_MD, async () => {
+		await arrange({ staged: ['docs/e.md', 'a.txt'] });
+		await clickRow('e.md, Index Modified, docs');
+		await cdp.key('s', 8);
+		await expectFocus({ row: 'a.txt, Index Modified', tab: 'a.txt (Index)' });
+		if ((await staged()).includes('docs/e.md')) throw new Error('e.md is still staged');
+	});
+});
+
+await scenario('s stages Markdown files with the same name one after another', async () => {
+	await withSetting('workbench.editorAssociations', RENDERED_MD, async () => {
+		await arrange({ modified: ['a.txt', 'docs/n.md', 'lib/n.md'] });
+		await clickRow('n.md, Modified, docs');
+		await clickRow('a.txt, Modified');
+		// a.txt is last, so focus moves up to lib/n.md, whose tab has the same title as docs/n.md.
+		await cdp.key('s');
+		await expectFocus({ row: 'n.md, Modified, lib', tab: 'n.md (Working Tree)' });
+		await cdp.key('s');
+		await expectFocus({ row: 'n.md, Modified, docs', tab: 'n.md (Working Tree)' });
+		if (JSON.stringify(await staged()) !== JSON.stringify(['a.txt', 'lib/n.md'])) throw new Error(`staged ${JSON.stringify(await staged())}`);
+	});
+});
+
+await scenario('s stages an image file highlighted with the arrow keys', async () => {
+	await arrange({ modified: ['a.txt', 'b.txt', 'p.png'] });
+	await clickRow('b.txt, Modified');
+	await cdp.key('ArrowDown');   // p.png, which opens in the image diff, with no tab input
+	await cdp.key('s');
+	await expectFocus({ row: 'b.txt, Modified', tab: 'b.txt (Working Tree)' });
+	if (JSON.stringify(await staged()) !== JSON.stringify(['p.png'])) throw new Error(`staged ${JSON.stringify(await staged())}`);
 });
 
 await scenario('an editor key stages the file in the editor and focuses the next one', async () => {

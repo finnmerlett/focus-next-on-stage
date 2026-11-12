@@ -53,6 +53,16 @@ const OPENS_BEFORE_RETURNING = new Set(['vscode.diff', 'vscode.open']);
 const MERGE_EDITOR_COMMANDS = new Set(['git.openMergeEditor', 'git.openWorktreeMergeEditor']);
 
 /** The command a click on the row runs. */
+/**
+ * The tab title a click on the row gives its editor, such as "e.md (Working Tree)". Git passes it
+ * to vscode.diff and vscode.open as the third argument.
+ */
+export function clickTitle(resource: InternalResource): string | undefined {
+	const command = resource.command;
+	const title = command && ['vscode.diff', 'vscode.open'].includes(command.command) ? command.arguments?.[2] : undefined;
+	return typeof title === 'string' ? title : undefined;
+}
+
 function clickCommand(resource: InternalResource): Click | undefined {
 	const command = resource.command;
 	if (!command) {

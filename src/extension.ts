@@ -4,7 +4,7 @@ import { getGit, Git, InternalGroup, InternalRepository, InternalResource, isInt
 import type { GroupId } from './groups';
 import { neighbour, SortKey, ViewMode } from './order';
 import { isInside, pathKey } from './paths';
-import { FileTarget, focusCommitInput, focusFile } from './scmFocus';
+import { clickTitle, FileTarget, focusCommitInput, focusFile } from './scmFocus';
 import { activeTabChangedFrom, activeTabFile, activeTabIsMultiDiff, activeTabKey, roundTrip, waitForActiveTabChange } from './tabs';
 import { DEFAULT_SETTINGS, Move, pickTarget, Settings, Target, whenSideEmpty } from './targets';
 
@@ -115,6 +115,8 @@ class Controller implements vscode.Disposable {
 	private current: vscode.CancellationTokenSource | undefined;
 	/** The last focus move started, which the next one waits for. */
 	private lastFocus: Promise<void> = Promise.resolve();
+	/** The file focus last moved to, to tell apart rows that open tabs with the same title. */
+	private lastFocusedFile: string | undefined;
 	/** The last key press: when its stage or unstage finished, and when it finished moving focus. */
 	private lastPress: { readonly moved: Promise<void>; readonly done: Promise<void> } = { moved: Promise.resolve(), done: Promise.resolve() };
 	/** Key presses waiting for the one before them. */
@@ -266,6 +268,7 @@ class Controller implements vscode.Disposable {
 			if (found.rowJustChanged) {
 				await whenQuiet(repository.state.onDidChange, QUIET_BEFORE_REVEAL, MAX_WAIT_BEFORE_REVEAL, token);
 			}
+			this.lastFocusedFile = found.fsPath;
 			await focusFile(found, token, this.log);
 		});
 	}
@@ -485,7 +488,7 @@ class Controller implements vscode.Disposable {
 	 * instead, which can still be the file opened before the highlighted row.
 	 */
 	private resourceForActiveEditor(move: Move): InternalResource[] | undefined {
-		const file = activeTabFile();
+		const file = activeTabFile() ?? this.fileForActiveTabTitle();
 		const model = this.git?.model;
 		if (!file || !model) {
 			return [];
@@ -505,6 +508,32 @@ class Controller implements vscode.Disposable {
 			if (resource) {
 				return [resource];
 			}
+		}
+		return undefined;
+	}
+
+	/**
+	 * The file of a row whose click opened the active tab, found by the tab title. Image diffs and
+	 * custom editor diffs, such as the rendered Markdown diff, have no tab input in the API, so
+	 * their file can't be read from the tab. When several rows give that title, such as two README.md
+	 * files, the file focus last moved to is picked if it's one of them.
+	 */
+	private fileForActiveTabTitle(): string | undefined {
+		const title = vscode.window.tabGroups.activeTabGroup.activeTab?.label;
+		const repositories = this.git?.model?.repositories.filter(isInternalRepository) ?? [];
+		const files = new Set(repositories.flatMap(repository =>
+			[repository.mergeGroup, repository.indexGroup, repository.workingTreeGroup, repository.untrackedGroup]
+				.flatMap(group => group.resourceStates)
+				.filter(resource => title !== undefined && clickTitle(resource) === title)
+				.map(resource => resource.resourceUri.fsPath)));
+		if (files.size === 1) {
+			return [...files][0];
+		}
+		if (this.lastFocusedFile !== undefined && files.has(this.lastFocusedFile)) {
+			return this.lastFocusedFile;
+		}
+		if (files.size > 1) {
+			this.log.debug(`Can't tell which file the active tab shows: ${files.size} rows open as "${title}"`);
 		}
 		return undefined;
 	}
